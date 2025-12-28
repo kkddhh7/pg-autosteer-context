@@ -28,10 +28,7 @@ DB_PATH = None
 POSTFIX = 0
 
 def init_db(postfix: int):
-    """
-    main.py 에서 한 번만 호출해서
-    storage 모듈 전체에서 쓸 postfix 를 설정
-    """
+    """Set the postfix used by this module (called once from main.py)."""
     global POSTFIX
     POSTFIX = postfix
 
@@ -58,9 +55,7 @@ auto_init_conn = _ensure_experiment_tags_table()
 
 
 def set_experiment_tag(tag_key: str, tag_value: str):
-    """
-    저장된 BENCHMARK_ID 기준으로 tag_key=tag_value 를 저장/갱신합니다.
-    """
+    """Store or update tag_key=tag_value for the current BENCHMARK_ID."""
     conn = _get_conn()
     conn.execute(
         "INSERT OR REPLACE INTO experiment_tags (benchmark_id, tag_key, tag_value) VALUES (?, ?, ?)",
@@ -70,9 +65,7 @@ def set_experiment_tag(tag_key: str, tag_value: str):
 
 
 def get_experiment_tags() -> Dict[str, str]:
-    """
-    현재 BENCHMARK_ID 에 붙은 모든 tag를 {key: value} 형태로 반환합니다.
-    """
+    """Return all tags for the current BENCHMARK_ID as {key: value}."""
     conn = _get_conn()
     rows = conn.execute(
         "SELECT tag_key, tag_value FROM experiment_tags WHERE benchmark_id = ?",
@@ -84,12 +77,12 @@ def _db():
     global ENGINE
     url = f'sqlite:///results/{TESTED_DATABASE}_{POSTFIX}.sqlite'
     logger.debug('Connect to database: %s', url)
-    
-    # 데이터베이스 파일이 존재하지 않는 경우에만 새로 생성
+
+    # Log when the database file does not exist yet.
     db_path = f'results/{TESTED_DATABASE}_{POSTFIX}.sqlite'
     if not os.path.exists(db_path):
         logger.info(f'Creating new database file: {db_path}')
-    
+
     ENGINE = create_engine(url)
 
     @event.listens_for(ENGINE, 'connect')
@@ -217,7 +210,7 @@ def experience(benchmark=None, cpu=None, IO=None, training_ratio=0.8):
             result[row.query_id] = [row]
 
     keys = list(result.keys())
-    # random.seed(41) 
+    # random.seed(41)
     random.shuffle(keys)
     split_index = int(len(keys) * training_ratio)
     train_keys = keys[:split_index]
@@ -321,13 +314,13 @@ def register_measurement(
         '새로운 측정값 등록 - 쿼리: %s, I/O 상태: [%s], CPU 부하: [%s], 비활성화된 규칙: [%s]',
         query_path, io_state, cpu_load, disabled_rules
     )
-    
+
     # Validate CPU load value
     valid_cpu_loads = ['LOW', 'MEDIUM', 'HIGH']
     if cpu_load not in valid_cpu_loads:
         logger.warning(f"잘못된 CPU 부하 값: {cpu_load}, 기본값 'LOW' 사용")
         cpu_load = 'LOW'
-    
+
     with _db() as conn:
         now = datetime.now()
         query = """

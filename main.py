@@ -1,7 +1,7 @@
 # Copyright 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 #
-"""Run AutoSteer's training mode to explore alternative query plans"""
+"""AutoSteer entry point for training and inference runs."""
 from typing import Type
 import storage
 import os
@@ -21,7 +21,7 @@ from load.io_sql_utils import detect_peak_iops, calc_iops_thresholds
 from load.io_sql_load import launch_io_load, stop_io_load
 from burden.cpu_load_postgresql import LoadController
 
-# 로깅 설정
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -77,9 +77,9 @@ if __name__ == '__main__':
         # import random
         # random.shuffle(queries)
         logger.info('Found the following SQL files: %s', queries)
-        
+
         pg_user = getpass.getuser()
-        
+
         # Define CPU and Disk load levels to iterate over
         cpu_load_levels = [20, 40, 70]
         disk_load_levels = ["none", "normal", "high"]
@@ -97,7 +97,7 @@ if __name__ == '__main__':
             logger.info("=== Setting up for CPU load: %s%% ===", cpu_load)
             cpu_controller = LoadController(target_load=cpu_load)
             cpu_controller.start()
-            
+
             try:
                 for disk_load_lvl in disk_load_levels:
                     target = thr[disk_load_lvl]
@@ -130,7 +130,7 @@ if __name__ == '__main__':
                 # Stop the CPU load generator for the current level
                 cpu_controller.stop()
                 logger.info("▶ CPU load generator stopped for %s%%", cpu_load)
-        
+
         logger.info("▶ All training combinations complete")
     else:
         logger.info('Run AutoSteer\'s normal mode')
